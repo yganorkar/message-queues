@@ -1,0 +1,62 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="student" format="java">
+      <types:shape format="java" element="edu.wsu.model.Student"/>
+    </types:type>
+    <types:type name="student_json" format="json">
+      <types:example format="json" location="examples/StudentJSON-1.json"/>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#ceeef5ff-ff3b-47b2-bd26-3d925ebc5bef">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="student_json"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="student"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#e582e58a-3d31-4d5d-a7b0-3cb7898b3203">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="student_json"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="student"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#ab18c7a5-3a5f-4d1c-b496-55e49b083ae0">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="student_json"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#f6f0bf93-84be-4075-8555-b502fa2913b8">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="student_json"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="student"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

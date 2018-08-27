@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:core="http://www.mulesoft.org/schema/mule/core"
+	xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq" 
+	xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms" 
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" 
+	xmlns="http://www.mulesoft.org/schema/mule/core" 
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd 
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd 
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd">
+	<http:listener-config name="HTTP_Queue_InBound" doc:name="HTTP Listener config" doc:id="d3925401-ce37-4089-9b10-956364c4653d" >
+		<http:listener-connection host="localhost" port="8081" />
+	</http:listener-config>
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="0b0ed8d2-6ca9-4dce-bf71-956eec68f3c3" >
+		<jms:active-mq-connection username="admin" password="admin">
+			<jms:caching-strategy >
+				<jms:default-caching />
+			</jms:caching-strategy>
+			<jms:factory-configuration maxRedelivery="-1" brokerUrl="tcp://localhost:61616" />
+		</jms:active-mq-connection>
+		<jms:consumer-config>
+			<jms:consumer-type >
+				<jms:queue-consumer />
+			</jms:consumer-type>
+		</jms:consumer-config>
+	</jms:config>
+	
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="7aff1cbb-202c-4b85-b2b3-80282d501919" >
+		<http:request-connection host="localhost" port="8082" />
+	</http:request-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="e68189b4-bec0-4c11-84bf-3e55e75ddb1e" >
+		<db:mssql-connection host="uiss-db-dev1.it.wsu.edu" user="testing_owner" password="Enu2LQPDwCx8hwQ" databaseName="testing" />
+	</db:config>
+	<db:config name="Database_Config1" doc:name="Database Config" doc:id="d0649fae-6e41-4934-aaf4-c02499a7bb04" >
+		<db:mssql-connection host="uiss-db-dev1.it.wsu.edu" user="testing_owner" password="Enu2LQPDwCx8hwQ" databaseName="testing" />
+	</db:config>
+	<jms:config name="JMS_Config1" doc:name="JMS Config" doc:id="d0aed1a7-b3e3-49e3-9c80-3edb948f5e1c" >
+		<jms:active-mq-connection username="admin" password="admin" >
+			<jms:caching-strategy >
+				<jms:default-caching />
+			</jms:caching-strategy>
+			<jms:factory-configuration brokerUrl="tcp://localhost:61616" />
+		</jms:active-mq-connection>
+		<jms:consumer-config >
+			<jms:consumer-type >
+				<jms:queue-consumer />
+			</jms:consumer-type>
+		</jms:consumer-config>
+	</jms:config>
+	<flow name="Publish_To_queuepoc_Queue" doc:id="2f118fa3-6b66-4734-ad12-90647452fca0" >
+		<http:listener doc:name="/queue" doc:id="fe105ecf-3dfb-4e88-b876-9609115d987f" config-ref="HTTP_Queue_InBound" path="/queue">
+			<ee:repeatable-file-store-stream />
+		</http:listener>
+		<ee:transform doc:name="Payload to Java Object" doc:id="91b81cfd-af63-4916-9332-34d9d38fdc02" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<jms:publish doc:name="to /queuepoc QUEUE" doc:id="99a0df44-d03f-484f-bd32-9271bbf5cd29" config-ref="JMS_Config" destination="queuepoc">
+		</jms:publish>
+		<logger level="INFO" doc:name="#['Message Published']" doc:id="7e752181-21bf-4b7a-95e4-c07fd89767d3" message="#['Message Published']"/>
+	</flow>
+	<flow name="Listener_On_queuepoc_Queue_With_Manual_Acknowledgement" doc:id="0225b078-115d-4785-ba72-e0609514cdc3" >
+		<jms:listener doc:name="for /queuepoc QUEUE" ackMode="MANUAL" config-ref="JMS_Config" numberOfConsumers="1" destination="queuepoc" doc:id="63188e2e-4e99-446f-9bec-d4046c605e5f" />
+		
+		<!--Do message processing-->
+
+    	<jms:ack ackId="#[attributes.ackId]" doc:name="#[attributes.ackId]"/>
+    	
+    	<error-handler>
+        <on-error-propagate>
+        <!--In case of error, recover the session--> 
+        	<jms:recover-session  ackId="#[vars.consumedMessage.attributes.ackId]" doc:name="Add message back to Queue"/>
+        </on-error-propagate>
+    </error-handler>
+	</flow>
+	<flow name="Publish_To_queueWIthServicepoc_Queue" doc:id="f4215683-0caf-4ee3-b5ba-c8353c92d34a" >
+		<http:listener doc:name="/service" doc:id="9b9822ae-c7fb-4d5b-9c75-0c0ce7d3b0e8" config-ref="HTTP_Queue_InBound" path="/service">
+			<ee:repeatable-file-store-stream />
+		</http:listener>
+
+		<ee:transform doc:name="Payload To Java Object" doc:id="f6f0bf93-84be-4075-8555-b502fa2913b8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<jms:publish doc:name="/queueWIthServicepoc" doc:id="99a0df44-d03f-484f-bd32-9271bbf5cd29" config-ref="JMS_Config" destination="queueWIthServicepoc">
+		</jms:publish>
+		
+	</flow>
+
+   	<flow name="Check_And_Update_Database" doc:id="859e7841-948d-4446-ac79-61d974b92374">
+		<scheduler doc:name="Frequency: 10000 milliseconds" doc:id="04d5154c-102e-41a1-a441-1ad1b5fd8a91">
+			<scheduling-strategy>
+				<fixed-frequency frequency="10000" startDelay="5000" />
+			</scheduling-strategy>
+		</scheduler>
+		<http:request method="GET" doc:name="/destination" doc:id="d3217d1f-5cc3-4635-b72d-bba23f92e96d" config-ref="HTTP_Request_configuration" path="/destination" />
+		<db:update doc:name="Status to 200" doc:id="92fadbab-899f-42aa-9eba-d9b6c21dad90" config-ref="Database_Config">
+			<db:sql>UPDATE ServerStatus
+SET status = 200
+WHERE url = 'http://localhost:8082'</db:sql>
+		</db:update>
+		<error-handler>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="0d8ebeaf-9f3d-47b5-ac96-c8c589d19466">
+				<db:update doc:name="Status to 404" doc:id="68306286-44ce-4360-bf42-dd84361dd8db" config-ref="Database_Config">
+			<db:sql>UPDATE ServerStatus
+SET status = 404
+WHERE url = 'http://localhost:8082'</db:sql>
+		</db:update>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+ 	<flow name="Listener_On_queueWIthServicepoc_Queue" doc:id="0225b078-115d-4785-ba72-e0609514cdc3" >
+		<jms:listener doc:name="for /queueWIthServicepoc QUEUE" ackMode="MANUAL" config-ref="JMS_Config" numberOfConsumers="1" destination="queueWIthServicepoc" doc:id="63188e2e-4e99-446f-9bec-d4046c605e5f" />
+		
+		<!--Do message processing-->
+    	<set-variable value="#[attributes.ackId]" doc:name="#[attributes.ackId]" doc:id="fa900ddc-700c-46d1-80e8-1d1ba22a4143" variableName="ackId"/>
+		<db:select doc:name="STATUS FROM table ServerStatus" doc:id="6976b712-7b6e-4089-a2cd-d0b9cd22728b" config-ref="Database_Config1">
+			<ee:repeatable-file-store-iterable />
+			<db:sql >SELECT STATUS FROM ServerStatus</db:sql>
+		</db:select>
+		<set-variable value="#[payload.STATUS[0]]" doc:name="#[payload.STATUS[0]]" doc:id="b2ad7ebc-2d9d-440d-8579-dc2cff70fd68" variableName="responseCode"/>
+		<choice doc:name="Choice" doc:id="b0e1675d-0f52-426c-9080-9d63decae01b" >
+			<when expression="#[vars.responseCode == 200]" >
+				<jms:ack ackId="#[vars.ackId]" doc:name="#[vars.ackId]"/>
+			</when>
+			<when expression="#[vars.responseCode == 404]" >
+				<set-variable value="#[vars.ackId]" doc:name="#[vars.ackId]" doc:id="975c3ee7-87f4-4afb-83c9-36da9da46863" variableName="recoverAckId"/>
+				<raise-error type="ROUTING" description="#[vars.recoverAckId]" />
+			
+			</when>
+		</choice>
+    	
+    	<error-handler>
+        <on-error-propagate>
+        <!--In case of error, recover the session-->
+				<scripting:execute engine="groovy" doc:name="Groovy Script to sleep main thread" doc:id="2e863e38-60e9-42e6-b274-05a79c4f871c">
+					<scripting:code>sleep(10000);</scripting:code>
+				</scripting:execute>
+				<jms:recover-session  ackId="#[error.description]" doc:name="#[error.description]"/>
+        
+</on-error-propagate>
+    </error-handler>
+	</flow>
+	<flow name="Publish_To_queueWithAckModeAuto_Queue" doc:id="8c2a02bd-03fc-4ec0-bcee-59122b279ef8" >
+		<http:listener doc:name="/serviceAllInOne" doc:id="cb3d1d1d-26ca-40f9-aa23-2916298a117a" config-ref="HTTP_Queue_InBound" path="/serviceAllInOne">
+			<ee:repeatable-file-store-stream />
+		</http:listener>
+		<ee:transform doc:name="Payload to Java Object" doc:id="c017370a-89f9-4697-a118-582e08e3329a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<jms:publish doc:name="/queueWithAckModeAuto" doc:id="480ceb5c-93a2-47e5-a43b-d4577c132b7e" config-ref="JMS_Config" destination="queueWithAckModeAuto"/>
+	</flow>
+	<flow name="Listener_On_queueWithAckModeAuto_Queue" doc:id="cca4edf4-sca0b8-4ab4-90a0-bc0fa2a854a2" >
+		<jms:listener doc:name="for /queueWithAckModeAuto QUEUE" doc:id="c466e908-7770-4730-a65a-9752c27fcc54" config-ref="JMS_Config" destination="queueWithAckModeAuto" ackMode="AUTO">
+			<jms:consumer-type >
+				<jms:queue-consumer />
+			</jms:consumer-type>
+		</jms:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="19527e8b-47f2-421b-8a93-6d87422f192c" message="#[payload]"/>
+		<http:request method="POST" doc:name="POST /destination" doc:id="ac18ebbd-0c76-4787-8c0c-d84b5627c479" config-ref="HTTP_Request_configuration" path="/destination" />
+		<choice doc:name="Choice" doc:id="8b44fd50-ae8b-4330-906e-1068b539257f">
+				<when expression="attributes.statusCode == 200">
+				<logger level="INFO" doc:name="Logger" doc:id="9a2c7cca-cac1-4863-be34-3a928ab0f997" message="Message consumed"/>
+			</when>
+			<otherwise>
+				<raise-error type="ROUTING" />
+			</otherwise>
+			</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="fc3136b0-0c54-4ecd-888b-6af9016cbd81" type="ANY">
+				<scripting:execute engine="groovy" doc:name="Copy_of_Execute" doc:id="4cf01ce0-4f65-4d52-abd0-5b1caee9017c" >
+					<scripting:code >sleep(10000);</scripting:code>
+				</scripting:execute>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+
+ 
+</mule>
